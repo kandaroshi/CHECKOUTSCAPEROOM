@@ -13,6 +13,16 @@
     rel="stylesheet"
   />
 
+  <!-- Estilos Flatpickr (calendario) -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
+  />
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/flatpickr/dist/themes/dark.css"
+  />
+
   <style>
     :root {
       --rojo-sangre: #c30000;
@@ -24,9 +34,7 @@
       --precio: #ff4040;
     }
 
-    * {
-      box-sizing: border-box;
-    }
+    * { box-sizing: border-box; }
 
     body {
       margin: 0;
@@ -56,7 +64,6 @@
       overflow: hidden;
     }
 
-    /* Goteo de sangre en la parte superior */
     .checkout-wrapper::before {
       content: "";
       position: absolute;
@@ -104,9 +111,7 @@
       color: var(--texto-secundario);
     }
 
-    .sub strong {
-      color: #ffaaaa;
-    }
+    .sub strong { color: #ffaaaa; }
 
     .horarios-info {
       margin-top: 6px;
@@ -124,12 +129,8 @@
     }
 
     @media (max-width: 700px) {
-      form {
-        grid-template-columns: 1fr;
-      }
-      .checkout-wrapper {
-        padding: 24px 18px 22px;
-      }
+      form { grid-template-columns: 1fr; }
+      .checkout-wrapper { padding: 24px 18px 22px; }
     }
 
     .campo {
@@ -145,10 +146,7 @@
       color: #ffb3b3;
     }
 
-    .obligatorio {
-      color: var(--rojo-sangre);
-      margin-left: 3px;
-    }
+    .obligatorio { color: var(--rojo-sangre); margin-left: 3px; }
 
     input,
     select {
@@ -162,9 +160,7 @@
       transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
     }
 
-    input::placeholder {
-      color: #666;
-    }
+    input::placeholder { color: #666; }
 
     input:focus,
     select:focus {
@@ -173,9 +169,7 @@
       background: #090909;
     }
 
-    select {
-      cursor: pointer;
-    }
+    select { cursor: pointer; }
 
     .hint {
       font-size: 0.75rem;
@@ -278,8 +272,18 @@
       max-width: 420px;
     }
 
-    .nota-checkout strong {
-      color: #ffb3b3;
+    .nota-checkout strong { color: #ffb3b3; }
+
+    /* Estilo extra para el campo de fecha con icono de calendario */
+    #fecha {
+      position: relative;
+      padding-right: 34px;
+      cursor: pointer;
+    }
+
+    .flatpickr-input[readonly] {
+      cursor: pointer;
+      background: rgba(5, 5, 5, 0.9);
     }
   </style>
 </head>
@@ -358,18 +362,19 @@
         <div class="hint">Usaremos este número para confirmar tu reserva.</div>
       </div>
 
-      <!-- Fecha -->
+      <!-- Fecha con calendario desplegable -->
       <div class="campo">
         <label for="fecha">
           Fecha para jugar<span class="obligatorio">*</span>
         </label>
         <input
-          type="date"
+          type="text"
           id="fecha"
           name="fecha"
+          placeholder="Elegí una fecha"
           required
         />
-        <div class="hint">Seleccioná el día en el que querés vivir el escape.</div>
+        <div class="hint">Al hacer clic se abre el calendario.</div>
       </div>
 
       <!-- Horario -->
@@ -385,7 +390,7 @@
         </div>
       </div>
 
-      <!-- Comentario adicional (opcional, campo full) -->
+      <!-- Comentario adicional -->
       <div class="campo campo-full">
         <label for="comentarios">
           Comentarios / Cumpleaños / Datos extra (opcional)
@@ -420,6 +425,10 @@
       </div>
     </form>
   </div>
+
+  <!-- Scripts Flatpickr (calendario) -->
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+  <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/l10n/es.js"></script>
 
   <script>
     const PRECIO_POR_JUGADOR = 10000;
@@ -506,7 +515,6 @@
       e.preventDefault();
 
       if (!form.checkValidity()) {
-        // Si faltan datos, dejamos que el navegador marque los campos
         alert("Revisá que todos los campos obligatorios estén completos.");
         return;
       }
@@ -528,6 +536,18 @@
           "Horario: " + horario + "\n\n" +
           "En producción, conectá este botón con tu pasarela de pago real o con tu backend."
       );
+    });
+
+    // Inicializar Flatpickr en español
+    flatpickr.localize(flatpickr.l10ns.es);
+
+    flatpickr("#fecha", {
+      dateFormat: "Y-m-d",
+      minDate: "today",
+      allowInput: false,
+      onChange: function () {
+        actualizarHorariosSegunFecha();
+      }
     });
 
     // Estado inicial
