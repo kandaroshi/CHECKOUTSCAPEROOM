@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="UTF-8" />
-  <title>Checkout - Sala de Escape</title>
+  <title>Paranoia - Checkout Sala de Escape</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
   <!-- Tipografías tipo película de terror -->
@@ -13,7 +13,7 @@
     rel="stylesheet"
   />
 
-  <!-- Estilos Flatpickr (calendario) -->
+  <!-- Estilos Flatpickr (calendario y hora) -->
   <link
     rel="stylesheet"
     href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
@@ -274,7 +274,7 @@
 
     .nota-checkout strong { color: #ffb3b3; }
 
-    /* Estilo extra para el campo de fecha con icono de calendario */
+    /* Campo de fecha estilo clickable */
     #fecha {
       position: relative;
       padding-right: 34px;
@@ -285,12 +285,58 @@
       cursor: pointer;
       background: rgba(5, 5, 5, 0.9);
     }
+
+    /* Campo de horario clickable */
+    #horario {
+      cursor: pointer;
+    }
+
+    /* Tarjeta con detalles de la sala */
+    .sala-preview {
+      margin-top: 6px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      background: rgba(10, 0, 0, 0.8);
+      font-size: 0.85rem;
+      color: var(--texto-secundario);
+    }
+
+    .sala-preview-icon {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle, #ff5050 0, #7a0000 70%);
+      font-size: 1.6rem;
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+    }
+
+    .sala-preview-title {
+      font-weight: 600;
+      color: #ffcdcd;
+      margin-bottom: 2px;
+    }
+
+    .sala-preview-desc {
+      font-size: 0.75rem;
+      color: #d9d9d9;
+    }
+
+    .sala-preview.hidden {
+      display: none;
+    }
   </style>
 </head>
 <body>
   <div class="checkout-wrapper">
     <header>
-      <div class="tagline">escape room • terror</div>
+      <div class="tagline">PARANOIA • ESCAPE ROOM</div>
       <h1>reservá tu sala</h1>
       <p class="sub">
         Viví <strong>la experiencia más terrorífica y divertida</strong> en
@@ -312,6 +358,15 @@
           <option value="The Clown">The Clown</option>
           <option value="El Psiquiátrico">El Psiquiátrico</option>
         </select>
+
+        <!-- Detalles de la sala -->
+        <div id="sala-preview" class="sala-preview hidden">
+          <div id="sala-preview-icon" class="sala-preview-icon">🤡</div>
+          <div>
+            <div id="sala-preview-title" class="sala-preview-title"></div>
+            <div id="sala-preview-desc" class="sala-preview-desc"></div>
+          </div>
+        </div>
       </div>
 
       <!-- Nombre y apellido -->
@@ -377,16 +432,20 @@
         <div class="hint">Al hacer clic se abre el calendario.</div>
       </div>
 
-      <!-- Horario -->
+      <!-- Horario con selector emergente -->
       <div class="campo">
         <label for="horario">
           Horario de la sala (1 hora)<span class="obligatorio">*</span>
         </label>
-        <select id="horario" name="horario" required>
-          <option value="">Primero elegí una fecha</option>
-        </select>
+        <input
+          type="text"
+          id="horario"
+          name="horario"
+          placeholder="Elegí un horario"
+          required
+        />
         <div class="hint">
-          Los horarios se ajustan automáticamente según si es día de semana o fin de semana.
+          Los horarios válidos se ajustan automáticamente según si es día de semana o fin de semana.
         </div>
       </div>
 
@@ -438,8 +497,16 @@
     const precioMensajeEl = document.getElementById("precio-mensaje");
 
     const fechaInput = document.getElementById("fecha");
-    const horarioSelect = document.getElementById("horario");
+    const horarioInput = document.getElementById("horario");
     const form = document.getElementById("checkout-form");
+
+    const salaSelect = document.getElementById("sala");
+    const salaPreview = document.getElementById("sala-preview");
+    const salaPreviewIcon = document.getElementById("sala-preview-icon");
+    const salaPreviewTitle = document.getElementById("sala-preview-title");
+    const salaPreviewDesc = document.getElementById("sala-preview-desc");
+
+    let horarioPicker = null;
 
     function formatearMoneda(valor) {
       return "$" + valor.toLocaleString("es-AR");
@@ -467,31 +534,15 @@
       precioMensajeEl.textContent = "";
     }
 
-    function generarOpcionesHorario(inicio, fin) {
-      horarioSelect.innerHTML = "";
-      const placeholder = document.createElement("option");
-      placeholder.value = "";
-      placeholder.textContent = "Seleccioná un horario disponible";
-      horarioSelect.appendChild(placeholder);
-
-      for (let h = inicio; h <= fin; h++) {
-        const opcion = document.createElement("option");
-        const hora = String(h).padStart(2, "0") + ":00";
-        opcion.value = hora;
-        opcion.textContent = hora + " hs";
-        horarioSelect.appendChild(opcion);
-      }
-    }
-
     function actualizarHorariosSegunFecha() {
       const valorFecha = fechaInput.value;
 
       if (!valorFecha) {
-        horarioSelect.innerHTML = "";
-        const placeholder = document.createElement("option");
-        placeholder.value = "";
-        placeholder.textContent = "Primero elegí una fecha";
-        horarioSelect.appendChild(placeholder);
+        if (horarioPicker) {
+          horarioPicker.clear();
+          horarioPicker.set({ minTime: null, maxTime: null });
+        }
+        horarioInput.value = "";
         return;
       }
 
@@ -499,17 +550,65 @@
       const fecha = new Date(anio, mes - 1, dia);
       const diaSemana = fecha.getDay(); // 0 domingo, 6 sábado
 
+      let minTime, maxTime;
       if (diaSemana >= 1 && diaSemana <= 5) {
         // Lunes a viernes
-        generarOpcionesHorario(12, 20);
+        minTime = "12:00";
+        maxTime = "20:00";
       } else {
         // Sábado o domingo
-        generarOpcionesHorario(10, 21);
+        minTime = "10:00";
+        maxTime = "21:00";
+      }
+
+      if (!horarioPicker) {
+        horarioPicker = flatpickr("#horario", {
+          enableTime: true,
+          noCalendar: true,
+          dateFormat: "H:i",
+          time_24hr: true,
+          minuteIncrement: 60,
+          allowInput: false,
+          minTime: minTime,
+          maxTime: maxTime
+        });
+      } else {
+        horarioPicker.set({ minTime: minTime, maxTime: maxTime });
+      }
+
+      if (
+        horarioInput.value &&
+        (horarioInput.value < minTime || horarioInput.value > maxTime)
+      ) {
+        horarioPicker.clear();
+      }
+    }
+
+    function actualizarSalaPreview() {
+      const value = salaSelect.value;
+
+      if (!value) {
+        salaPreview.classList.add("hidden");
+        return;
+      }
+
+      salaPreview.classList.remove("hidden");
+
+      if (value === "The Clown") {
+        salaPreviewIcon.textContent = "🤡";
+        salaPreviewTitle.textContent = "The Clown";
+        salaPreviewDesc.textContent =
+          "Payaso maldito, risas macabras y una carpa donde nada es un juego.";
+      } else if (value === "El Psiquiátrico") {
+        salaPreviewIcon.textContent = "🏥";
+        salaPreviewTitle.textContent = "El Psiquiátrico";
+        salaPreviewDesc.textContent =
+          "Pasillos de hospital abandonado, historiales clínicos perdidos y susurros en la oscuridad.";
       }
     }
 
     jugadoresSelect.addEventListener("change", actualizarPrecio);
-    fechaInput.addEventListener("change", actualizarHorariosSegunFecha);
+    salaSelect.addEventListener("change", actualizarSalaPreview);
 
     form.addEventListener("submit", function (e) {
       e.preventDefault();
@@ -519,12 +618,12 @@
         return;
       }
 
-      const sala = document.getElementById("sala").value;
+      const sala = salaSelect.value;
       const nombre = document.getElementById("nombre").value;
       const jugadores = jugadoresSelect.value;
       const telefono = document.getElementById("telefono").value;
       const fecha = fechaInput.value;
-      const horario = horarioSelect.value;
+      const horario = horarioInput.value;
 
       alert(
         "Reserva registrada (demo):\n\n" +
@@ -538,7 +637,7 @@
       );
     });
 
-    // Inicializar Flatpickr en español
+    // Inicializar Flatpickr en español (calendario + hora)
     flatpickr.localize(flatpickr.l10ns.es);
 
     flatpickr("#fecha", {
@@ -553,6 +652,7 @@
     // Estado inicial
     actualizarPrecio();
     actualizarHorariosSegunFecha();
+    actualizarSalaPreview();
   </script>
 </body>
 </html>
