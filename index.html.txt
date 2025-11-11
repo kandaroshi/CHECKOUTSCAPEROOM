@@ -1,0 +1,538 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Checkout - Sala de Escape</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tipografías tipo película de terror -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link
+    href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700&family=Montserrat:wght@300;400;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    :root {
+      --rojo-sangre: #c30000;
+      --rojo-profundo: #700000;
+      --negro: #050505;
+      --gris-oscuro: #101010;
+      --texto-principal: #f5f5f5;
+      --texto-secundario: #cccccc;
+      --precio: #ff4040;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Montserrat", system-ui, -apple-system, sans-serif;
+      background:
+        radial-gradient(circle at top, #3b0000 0, #050505 55%) fixed,
+        radial-gradient(circle at bottom, #1a0000 0, #000000 60%) fixed;
+      color: var(--texto-principal);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 32px 16px;
+    }
+
+    .checkout-wrapper {
+      position: relative;
+      max-width: 960px;
+      width: 100%;
+      background: radial-gradient(circle at top, #220000 0, #050505 70%);
+      border-radius: 18px;
+      padding: 32px 24px 28px;
+      border: 1px solid rgba(255, 0, 0, 0.35);
+      box-shadow:
+        0 0 35px rgba(0, 0, 0, 0.9),
+        0 0 55px rgba(195, 0, 0, 0.35);
+      overflow: hidden;
+    }
+
+    /* Goteo de sangre en la parte superior */
+    .checkout-wrapper::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      top: -40px;
+      background:
+        radial-gradient(circle at 10% 40%, rgba(255, 0, 0, 0.9) 0, transparent 55%),
+        radial-gradient(circle at 35% 25%, rgba(160, 0, 0, 0.85) 0, transparent 55%),
+        radial-gradient(circle at 65% 35%, rgba(200, 0, 0, 0.9) 0, transparent 55%),
+        radial-gradient(circle at 85% 45%, rgba(140, 0, 0, 0.8) 0, transparent 55%);
+      opacity: 0.12;
+      pointer-events: none;
+    }
+
+    header {
+      position: relative;
+      text-align: center;
+      margin-bottom: 24px;
+      z-index: 1;
+    }
+
+    .tagline {
+      font-size: 0.8rem;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--texto-secundario);
+      margin-bottom: 6px;
+    }
+
+    h1 {
+      font-family: "Cinzel", serif;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      font-size: clamp(1.5rem, 3vw, 2rem);
+      margin: 0;
+      color: #ffeded;
+      text-shadow:
+        0 0 10px rgba(255, 0, 0, 0.7),
+        0 0 24px rgba(0, 0, 0, 0.9);
+    }
+
+    .sub {
+      margin-top: 10px;
+      font-size: 0.9rem;
+      color: var(--texto-secundario);
+    }
+
+    .sub strong {
+      color: #ffaaaa;
+    }
+
+    .horarios-info {
+      margin-top: 6px;
+      font-size: 0.8rem;
+      color: #aaaaaa;
+    }
+
+    form {
+      position: relative;
+      z-index: 1;
+      margin-top: 24px;
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 20px 18px;
+    }
+
+    @media (max-width: 700px) {
+      form {
+        grid-template-columns: 1fr;
+      }
+      .checkout-wrapper {
+        padding: 24px 18px 22px;
+      }
+    }
+
+    .campo {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: #ffb3b3;
+    }
+
+    .obligatorio {
+      color: var(--rojo-sangre);
+      margin-left: 3px;
+    }
+
+    input,
+    select {
+      padding: 10px 11px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(5, 5, 5, 0.9);
+      color: var(--texto-principal);
+      font-size: 0.95rem;
+      outline: none;
+      transition: border 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
+    }
+
+    input::placeholder {
+      color: #666;
+    }
+
+    input:focus,
+    select:focus {
+      border-color: var(--rojo-sangre);
+      box-shadow: 0 0 0 1px rgba(195, 0, 0, 0.5);
+      background: #090909;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    .hint {
+      font-size: 0.75rem;
+      color: #a7a7a7;
+    }
+
+    .campo-full {
+      grid-column: 1 / -1;
+    }
+
+    .precio-wrapper {
+      grid-column: 1 / -1;
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 10px;
+      padding: 12px 14px;
+      margin-top: 4px;
+      border-radius: 12px;
+      background: linear-gradient(90deg, rgba(30, 0, 0, 0.9), rgba(10, 0, 0, 0.95));
+      border: 1px dashed rgba(255, 0, 0, 0.45);
+    }
+
+    .precio-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: #ffb3b3;
+    }
+
+    #precio-total {
+      font-family: "Cinzel", serif;
+      font-size: 1.4rem;
+      color: var(--precio);
+      text-shadow: 0 0 12px rgba(255, 0, 0, 0.7);
+    }
+
+    .precio-detalle {
+      font-size: 0.75rem;
+      color: var(--texto-secundario);
+    }
+
+    .precio-detalle strong {
+      color: #ff9999;
+    }
+
+    .precio-mensaje {
+      font-size: 0.8rem;
+      color: #ffcdcd;
+      margin-top: 4px;
+    }
+
+    .acciones {
+      grid-column: 1 / -1;
+      margin-top: 8px;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+    }
+
+    button[type="submit"] {
+      padding: 12px 32px;
+      border-radius: 999px;
+      border: none;
+      font-size: 0.98rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.18em;
+      cursor: pointer;
+      background: radial-gradient(circle at 30% 0, #ff5050 0, #910000 45%, #2b0000 100%);
+      color: #fff7f7;
+      box-shadow:
+        0 0 18px rgba(255, 0, 0, 0.7),
+        0 8px 26px rgba(0, 0, 0, 0.9);
+      transform: translateY(0);
+      transition: transform 0.14s ease, box-shadow 0.14s ease, filter 0.14s ease,
+        background-position 0.14s ease;
+      background-size: 160% 160%;
+    }
+
+    button[type="submit"]:hover {
+      transform: translateY(-1px);
+      box-shadow:
+        0 0 22px rgba(255, 100, 100, 0.95),
+        0 10px 30px rgba(0, 0, 0, 0.9);
+      filter: brightness(1.05);
+      background-position: 60% 0%;
+    }
+
+    button[type="submit"]:active {
+      transform: translateY(1px) scale(0.99);
+      box-shadow: 0 0 12px rgba(255, 0, 0, 0.6);
+    }
+
+    .nota-checkout {
+      font-size: 0.75rem;
+      color: #bbbbbb;
+      text-align: center;
+      max-width: 420px;
+    }
+
+    .nota-checkout strong {
+      color: #ffb3b3;
+    }
+  </style>
+</head>
+<body>
+  <div class="checkout-wrapper">
+    <header>
+      <div class="tagline">escape room • terror</div>
+      <h1>reservá tu sala</h1>
+      <p class="sub">
+        Viví <strong>la experiencia más terrorífica y divertida</strong> en
+        <strong>The Clown</strong> o <strong>El Psiquiátrico</strong>.
+      </p>
+      <p class="horarios-info">
+        Horarios: Lun a Vie 12:00–20:00 · Sáb y Dom 10:00–21:00
+      </p>
+    </header>
+
+    <form id="checkout-form" novalidate>
+      <!-- Sala -->
+      <div class="campo">
+        <label for="sala">
+          Sala a elegir<span class="obligatorio">*</span>
+        </label>
+        <select id="sala" name="sala" required>
+          <option value="">Seleccioná una sala</option>
+          <option value="The Clown">The Clown</option>
+          <option value="El Psiquiátrico">El Psiquiátrico</option>
+        </select>
+      </div>
+
+      <!-- Nombre y apellido -->
+      <div class="campo">
+        <label for="nombre">
+          Nombre y apellido<span class="obligatorio">*</span>
+        </label>
+        <input
+          type="text"
+          id="nombre"
+          name="nombre"
+          placeholder="Ej: Lucía Martínez"
+          required
+        />
+      </div>
+
+      <!-- Cantidad de jugadores -->
+      <div class="campo">
+        <label for="jugadores">
+          Cantidad de jugadores<span class="obligatorio">*</span>
+        </label>
+        <select id="jugadores" name="jugadores" required>
+          <option value="">Seleccioná</option>
+          <option value="1">1 jugador</option>
+          <option value="2">2 jugadores</option>
+          <option value="3">3 jugadores</option>
+          <option value="4">4 jugadores</option>
+          <option value="5">5 jugadores</option>
+          <option value="6">6 jugadores</option>
+          <option value="7">7 jugadores</option>
+          <option value="mas">7 o más (consultar)</option>
+        </select>
+        <div class="hint">Precio base: $10.000 por jugador.</div>
+      </div>
+
+      <!-- Teléfono / WhatsApp -->
+      <div class="campo">
+        <label for="telefono">
+          Teléfono / WhatsApp<span class="obligatorio">*</span>
+        </label>
+        <input
+          type="tel"
+          id="telefono"
+          name="telefono"
+          placeholder="Ej: 11 6154 0215"
+          required
+        />
+        <div class="hint">Usaremos este número para confirmar tu reserva.</div>
+      </div>
+
+      <!-- Fecha -->
+      <div class="campo">
+        <label for="fecha">
+          Fecha para jugar<span class="obligatorio">*</span>
+        </label>
+        <input
+          type="date"
+          id="fecha"
+          name="fecha"
+          required
+        />
+        <div class="hint">Seleccioná el día en el que querés vivir el escape.</div>
+      </div>
+
+      <!-- Horario -->
+      <div class="campo">
+        <label for="horario">
+          Horario de la sala (1 hora)<span class="obligatorio">*</span>
+        </label>
+        <select id="horario" name="horario" required>
+          <option value="">Primero elegí una fecha</option>
+        </select>
+        <div class="hint">
+          Los horarios se ajustan automáticamente según si es día de semana o fin de semana.
+        </div>
+      </div>
+
+      <!-- Comentario adicional (opcional, campo full) -->
+      <div class="campo campo-full">
+        <label for="comentarios">
+          Comentarios / Cumpleaños / Datos extra (opcional)
+        </label>
+        <input
+          type="text"
+          id="comentarios"
+          name="comentarios"
+          placeholder="Ej: cumpleaños, grupo escolar, pedido especial..."
+        />
+      </div>
+
+      <!-- Precio final -->
+      <div class="precio-wrapper">
+        <div>
+          <div class="precio-label">Total estimado</div>
+          <div class="precio-detalle">
+            <strong>$10.000</strong> por jugador. El total se actualiza según la cantidad.
+          </div>
+          <div id="precio-mensaje" class="precio-mensaje"></div>
+        </div>
+        <div id="precio-total">$0</div>
+      </div>
+
+      <!-- Botón y nota -->
+      <div class="acciones">
+        <button type="submit">Reservá tu sala</button>
+        <p class="nota-checkout">
+          Al hacer clic en <strong>“Reservá tu sala”</strong>, se enviarán tus datos
+          para coordinar la reserva y el pago final según disponibilidad.
+        </p>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    const PRECIO_POR_JUGADOR = 10000;
+
+    const jugadoresSelect = document.getElementById("jugadores");
+    const precioTotalEl = document.getElementById("precio-total");
+    const precioMensajeEl = document.getElementById("precio-mensaje");
+
+    const fechaInput = document.getElementById("fecha");
+    const horarioSelect = document.getElementById("horario");
+    const form = document.getElementById("checkout-form");
+
+    function formatearMoneda(valor) {
+      return "$" + valor.toLocaleString("es-AR");
+    }
+
+    function actualizarPrecio() {
+      const valor = jugadoresSelect.value;
+
+      if (!valor) {
+        precioTotalEl.textContent = "$0";
+        precioMensajeEl.textContent = "";
+        return;
+      }
+
+      if (valor === "mas") {
+        precioTotalEl.textContent = "A coordinar";
+        precioMensajeEl.textContent =
+          "Para grupos de 7 o más personas, el precio se coordina directamente por WhatsApp.";
+        return;
+      }
+
+      const cantidad = parseInt(valor, 10);
+      const total = cantidad * PRECIO_POR_JUGADOR;
+      precioTotalEl.textContent = formatearMoneda(total);
+      precioMensajeEl.textContent = "";
+    }
+
+    function generarOpcionesHorario(inicio, fin) {
+      horarioSelect.innerHTML = "";
+      const placeholder = document.createElement("option");
+      placeholder.value = "";
+      placeholder.textContent = "Seleccioná un horario disponible";
+      horarioSelect.appendChild(placeholder);
+
+      for (let h = inicio; h <= fin; h++) {
+        const opcion = document.createElement("option");
+        const hora = String(h).padStart(2, "0") + ":00";
+        opcion.value = hora;
+        opcion.textContent = hora + " hs";
+        horarioSelect.appendChild(opcion);
+      }
+    }
+
+    function actualizarHorariosSegunFecha() {
+      const valorFecha = fechaInput.value;
+
+      if (!valorFecha) {
+        horarioSelect.innerHTML = "";
+        const placeholder = document.createElement("option");
+        placeholder.value = "";
+        placeholder.textContent = "Primero elegí una fecha";
+        horarioSelect.appendChild(placeholder);
+        return;
+      }
+
+      const [anio, mes, dia] = valorFecha.split("-").map(Number);
+      const fecha = new Date(anio, mes - 1, dia);
+      const diaSemana = fecha.getDay(); // 0 domingo, 6 sábado
+
+      if (diaSemana >= 1 && diaSemana <= 5) {
+        // Lunes a viernes
+        generarOpcionesHorario(12, 20);
+      } else {
+        // Sábado o domingo
+        generarOpcionesHorario(10, 21);
+      }
+    }
+
+    jugadoresSelect.addEventListener("change", actualizarPrecio);
+    fechaInput.addEventListener("change", actualizarHorariosSegunFecha);
+
+    form.addEventListener("submit", function (e) {
+      e.preventDefault();
+
+      if (!form.checkValidity()) {
+        // Si faltan datos, dejamos que el navegador marque los campos
+        alert("Revisá que todos los campos obligatorios estén completos.");
+        return;
+      }
+
+      const sala = document.getElementById("sala").value;
+      const nombre = document.getElementById("nombre").value;
+      const jugadores = jugadoresSelect.value;
+      const telefono = document.getElementById("telefono").value;
+      const fecha = fechaInput.value;
+      const horario = horarioSelect.value;
+
+      alert(
+        "Reserva registrada (demo):\n\n" +
+          "Sala: " + sala + "\n" +
+          "Nombre: " + nombre + "\n" +
+          "Jugadores: " + jugadores + "\n" +
+          "Teléfono: " + telefono + "\n" +
+          "Fecha: " + fecha + "\n" +
+          "Horario: " + horario + "\n\n" +
+          "En producción, conectá este botón con tu pasarela de pago real o con tu backend."
+      );
+    });
+
+    // Estado inicial
+    actualizarPrecio();
+    actualizarHorariosSegunFecha();
+  </script>
+</body>
+</html>
